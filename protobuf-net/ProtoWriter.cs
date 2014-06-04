@@ -296,12 +296,16 @@ namespace ProtoBuf
         }
 
         MutableList recursionStack;
+		System.Collections.Hashtable recursionStackHash;
         private void CheckRecursionStackAndPush(object instance)
         {
-            int hitLevel;
-            if (recursionStack == null) { recursionStack = new MutableList(); }
-            else if (instance != null && (hitLevel = recursionStack.IndexOfReference(instance)) >= 0)
-            {
+			if (recursionStack == null) {
+				recursionStack = new MutableList();
+				recursionStackHash = new System.Collections.Hashtable(new ReferenceEqualityComparer());
+			}
+			else if (instance != null && recursionStackHash.ContainsKey(instance))
+			{
+				int hitLevel = recursionStack.IndexOfReference(instance);
 #if DEBUG
                 Helpers.DebugWriteLine("Stack:");
                 foreach(object obj in recursionStack)
@@ -310,11 +314,19 @@ namespace ProtoBuf
                 }
                 Helpers.DebugWriteLine(instance == null ? "<null>" : instance.ToString());
 #endif
-                throw new ProtoException("Possible recursion detected (offset: " + (recursionStack.Count - hitLevel).ToString() + " level(s)): " + instance.ToString());
-            }
+				throw new ProtoException("Possible recursion detected (offset: " + (recursionStack.Count - hitLevel).ToString() + " level(s)): " + instance.ToString());
+			}
             recursionStack.Add(instance);
+			if (instance != null)
+				recursionStackHash.Add(instance, instance);
         }
-        private void PopRecursionStack() { recursionStack.RemoveLast(); }
+        private void PopRecursionStack()
+		{
+			object head = recursionStack[recursionStack.Count - 1];
+			recursionStack.RemoveLast();
+			if (head != null)
+				recursionStackHash.Remove(head);
+		}
 
         private static SubItemToken StartSubItem(object instance, ProtoWriter writer, bool allowFixed)
         {
@@ -947,5 +959,18 @@ namespace ProtoBuf
             if (writer == null) throw new ArgumentNullException("writer");
             WriteString(writer.SerializeType(value), writer);
         }
+
+		private class ReferenceEqualityComparer : System.Collections.IEqualityComparer
+		{
+			bool System.Collections.IEqualityComparer.Equals(object x, object y)
+			{
+				return Object.ReferenceEquals(x, y);
+			}
+
+			int System.Collections.IEqualityComparer.GetHashCode(object obj)
+			{
+				return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(obj);
+			}
+		}
     }
 }
