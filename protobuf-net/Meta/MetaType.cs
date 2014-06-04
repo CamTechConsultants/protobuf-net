@@ -943,7 +943,7 @@ namespace ProtoBuf.Meta
             if (member == null || (family == AttributeFamily.None && !isEnum)) return null; // nix
             int fieldNumber = int.MinValue, minAcceptFieldNumber = inferByTagName ? -1 : 1;
             string name = null;
-            bool isPacked = false, ignore = false, done = false, isRequired = false, asReference = false, asReferenceHasValue = false, dynamicType = false, tagIsPinned = false, overwriteList = false;
+            bool isPacked = false, ignore = false, done = false, isRequired = false, asReference = false, asReferenceHasValue = false, dynamicType = false, tagIsPinned = false, overwriteList = false, supportNull = false;
             DataFormat dataFormat = DataFormat.Default;
             if (isEnum) forced = true;
             AttributeMap[] attribs = AttributeMap.Create(model, member, true);
@@ -996,6 +996,7 @@ namespace ProtoBuf.Meta
                     GetFieldBoolean(ref isRequired, attrib, "IsRequired");
                     GetFieldBoolean(ref isPacked, attrib, "IsPacked");
                     GetFieldBoolean(ref overwriteList, attrib, "OverwriteList");
+                    GetFieldBoolean(ref supportNull, attrib, "SupportNull");
                     GetDataFormat(ref dataFormat, attrib, "DataFormat");
 
 #if !FEAT_IKVM
@@ -1022,6 +1023,7 @@ namespace ProtoBuf.Meta
                             GetFieldBoolean(ref isRequired, ppma, "IsRequired");
                             GetFieldBoolean(ref isPacked, ppma, "IsPacked");
                             GetFieldBoolean(ref overwriteList, attrib, "OverwriteList");
+                            GetFieldBoolean(ref supportNull, attrib, "SupportNull");
                             GetDataFormat(ref dataFormat, ppma, "DataFormat");
 
 #if !FEAT_IKVM
@@ -1075,6 +1077,7 @@ namespace ProtoBuf.Meta
             result.DynamicType = dynamicType;
             result.IsPacked = isPacked;
             result.OverwriteList = overwriteList;
+            result.SupportNull = supportNull;
             result.IsRequired = isRequired;
             result.Name = Helpers.IsNullOrEmpty(name) ? member.Name : name;
             result.Member = member;
@@ -1165,6 +1168,7 @@ namespace ProtoBuf.Meta
                 vm.IsPacked = normalizedAttribute.IsPacked;
                 vm.IsRequired = normalizedAttribute.IsRequired;
                 vm.OverwriteList = normalizedAttribute.OverwriteList;
+                vm.SupportNull = normalizedAttribute.SupportNull;
                 if (normalizedAttribute.AsReferenceHasValue)
                 {
                     vm.AsReference = normalizedAttribute.AsReference;

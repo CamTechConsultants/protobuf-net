@@ -153,6 +153,20 @@ namespace ProtoBuf
         }
 
         /// <summary>
+        /// Should lists have extended support for null values? This option only applies to list/array data.
+        /// Note this makes the serialization less efficient.
+        /// </summary>
+        public bool SupportNull
+        {
+            get { return (options & MemberSerializationOptions.SupportNull) == MemberSerializationOptions.SupportNull; }
+            set
+            {
+                if (value) options |= MemberSerializationOptions.SupportNull;
+                else options &= ~MemberSerializationOptions.SupportNull;
+            }
+        }
+
+        /// <summary>
         /// Gets or sets a value indicating whether this member is packed (lists/arrays).
         /// </summary>
         public MemberSerializationOptions Options { get { return options; } set { options = value; } }
@@ -195,7 +209,12 @@ namespace ProtoBuf
         /// <summary>
         /// Determines whether the types AsReferenceDefault value is used, or whether this member's AsReference should be used
         /// </summary>
-        AsReferenceHasValue = 32
+        AsReferenceHasValue = 32,
+        /// <summary>
+        /// Should lists have extended support for null values? This option only applies to list/array data.
+        /// Note this makes the serialization less efficient.
+        /// </summary>
+        SupportNull = 64,
     }
 
     /// <summary>
