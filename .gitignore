@@ -1,3 +1,7 @@
 Debug
 Release
 packages/
+*.suo
+*.csproj.user
+TestWcfServer/bin/
+
