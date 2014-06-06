@@ -1815,7 +1815,7 @@ namespace ProtoBuf.Meta
             if (itemType == null) { itemType = TypeModel.GetListItemType(this, type); }
 
             // check for nested data (not allowed)
-            if (itemType != null)
+            if (itemType != null && !this[itemType].IgnoreListHandling)
             {
                 Type nestedItemType = null, nestedDefaultType = null;
                 ResolveListTypes(itemType, ref nestedItemType, ref nestedDefaultType);
