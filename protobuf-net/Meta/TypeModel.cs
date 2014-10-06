@@ -220,6 +220,29 @@ namespace ProtoBuf.Meta
 #endif
         }
         /// <summary>
+        /// Writes a protocol-buffer representation of the given instance to the supplied SerializationInfo.
+        /// </summary>
+        /// <typeparam name="T">The type being serialized.</typeparam>
+        /// <param name="info">The destination SerializationInfo to write to.</param>
+        /// <param name="context">Additional information about this serialization operation.</param>
+        /// <param name="instance">The existing instance to be serialized (cannot be null).</param>
+        public void Serialize<T>(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context, T instance) where T : class, System.Runtime.Serialization.ISerializable
+        {
+#if FEAT_IKVM
+            throw new NotSupportedException();
+#else
+            // note: also tried byte[]... it doesn't perform hugely well with either (compared to regular serialization)
+            if (info == null) throw new ArgumentNullException("info");
+            if (instance == null) throw new ArgumentNullException("instance");
+            if (instance.GetType() != typeof(T)) throw new ArgumentException("Incorrect type", "instance");
+            using (MemoryStream ms = new MemoryStream())
+            {
+                this.Serialize(ms, instance, context);
+                info.AddValue(Serializer.ProtoBinaryField, ms.ToArray());
+            }
+#endif
+        }
+        /// <summary>
         /// Writes a protocol-buffer representation of the given instance to the supplied writer.
         /// </summary>
         /// <param name="value">The existing instance to be serialized (cannot be null).</param>
@@ -235,6 +258,35 @@ namespace ProtoBuf.Meta
             SerializeCore(dest, value);
             dest.CheckDepthFlushlock();
             ProtoWriter.Flush(dest);
+#endif
+        }
+
+        /// <summary>
+        /// Applies a protocol-buffer from a SerializationInfo to an existing instance.
+        /// </summary>
+        /// <typeparam name="T">The type being merged.</typeparam>
+        /// <param name="instance">The existing instance to be modified (cannot be null).</param>
+        /// <param name="info">The SerializationInfo containing the data to apply to the instance (cannot be null).</param>
+        /// <param name="context">Additional information about this serialization operation.</param>
+        public void Merge<T>(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context, T instance) where T : class, System.Runtime.Serialization.ISerializable
+        {
+#if FEAT_IKVM
+            throw new NotSupportedException();
+#else
+            // note: also tried byte[]... it doesn't perform hugely well with either (compared to regular serialization)
+            if (info == null) throw new ArgumentNullException("info");
+            if (instance == null) throw new ArgumentNullException("instance");
+            if (instance.GetType() != typeof(T)) throw new ArgumentException("Incorrect type", "instance");
+
+            byte[] buffer = (byte[])info.GetValue(Serializer.ProtoBinaryField, typeof(byte[]));
+            using (MemoryStream ms = new MemoryStream(buffer))
+            {
+                T result = (T)this.Deserialize(ms, instance, typeof(T), context);
+                if (!ReferenceEquals(result, instance))
+                {
+                    throw new ProtoException("Deserialization changed the instance; cannot succeed.");
+                }
+            }
 #endif
         }
 

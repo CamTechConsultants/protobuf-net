@@ -127,15 +127,7 @@ namespace ProtoBuf
         /// <param name="context">Additional information about this serialization operation.</param>
         public static void Serialize<T>(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context, T instance) where T : class, System.Runtime.Serialization.ISerializable
         {
-            // note: also tried byte[]... it doesn't perform hugely well with either (compared to regular serialization)
-            if (info == null) throw new ArgumentNullException("info");
-            if (instance == null) throw new ArgumentNullException("instance");
-            if (instance.GetType() != typeof(T)) throw new ArgumentException("Incorrect type", "instance");
-            using (MemoryStream ms = new MemoryStream())
-            {
-                RuntimeTypeModel.Default.Serialize(ms, instance, context);
-                info.AddValue(ProtoBinaryField, ms.ToArray());
-            }
+            RuntimeTypeModel.Default.Serialize(info, context, instance);
         }
 #endif
 #if PLAT_XMLSERIALIZER
@@ -190,7 +182,7 @@ namespace ProtoBuf
         }
 #endif
 
-        private const string ProtoBinaryField = "proto";
+        internal const string ProtoBinaryField = "proto";
 #if PLAT_BINARYFORMATTER && !NO_GENERICS && !(WINRT || PHONE8)
         /// <summary>
         /// Applies a protocol-buffer from a SerializationInfo to an existing instance.
@@ -211,20 +203,7 @@ namespace ProtoBuf
         /// <param name="context">Additional information about this serialization operation.</param>
         public static void Merge<T>(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context, T instance) where T : class, System.Runtime.Serialization.ISerializable
         {
-            // note: also tried byte[]... it doesn't perform hugely well with either (compared to regular serialization)
-            if (info == null) throw new ArgumentNullException("info");
-            if (instance == null) throw new ArgumentNullException("instance");
-            if (instance.GetType() != typeof(T)) throw new ArgumentException("Incorrect type", "instance");
-
-            byte[] buffer = (byte[])info.GetValue(ProtoBinaryField, typeof(byte[]));
-            using (MemoryStream ms = new MemoryStream(buffer))
-            {
-                T result = (T)RuntimeTypeModel.Default.Deserialize(ms, instance, typeof(T), context);
-                if (!ReferenceEquals(result, instance))
-                {
-                    throw new ProtoException("Deserialization changed the instance; cannot succeed.");
-                }
-            }
+            RuntimeTypeModel.Default.Merge(info, context, instance);
         }
 #endif
 
